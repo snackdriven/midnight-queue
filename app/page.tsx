@@ -115,8 +115,8 @@ export default function Home({ dataUrl = "/api/releases", resolveTrailer = defau
       <aside className="sidebar">
         <a className="brand" href="#top"><span className="brand-mark">M</span><span>midnight<br />queue</span></a>
         <nav aria-label="Tracker navigation">
-          <a className="nav-active" href="#releases"><span>✦</span> Releases</a>
-          <button className={showWatched ? "nav-active" : ""} onClick={() => { if (!showWatched) setActive("all"); setShowWatched((value) => !value); }}><span>◌</span> Watched <b>{watched.length}</b></button>
+          <a className={showWatched ? "" : "nav-active"} aria-current={showWatched ? undefined : "page"} href="#releases" onClick={() => setShowWatched(false)}><span>✦</span> Releases</a>
+          <button className={showWatched ? "nav-active" : ""} aria-current={showWatched ? "page" : undefined} onClick={() => { if (!showWatched) setActive("all"); setShowWatched((value) => !value); }}><span>◌</span> Watched <b>{watched.length}</b></button>
         </nav>
         <div className="sidebar-bottom">
           <p><i className={sourceStatus} /> U.S. release data<br /><small>{sourceState}</small></p>
