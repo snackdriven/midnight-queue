@@ -1,23 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
-type Movie = {
-  title: string;
-  date: string;
-  month: string;
-  year: string;
-  genre: string;
-  stage: "theaters" | "streaming" | "released" | "soon";
-  availability: string;
-  platform?: string;
-  note: string;
-  color: string;
-  poster?: string;
-  backdrop?: string;
-  tmdbId?: number;
-  trailerUrl?: string;
-};
+import { applyStage, releasePool, stageCounts as countByStage, type Movie, type StageFilter } from "./releases";
 
 const movies: Movie[] = [
   { title: "The Black Phone 2", date: "Oct 17", month: "OCT", year: "2025", genre: "Supernatural", stage: "released", availability: "Recently released", note: "The Grabber is back.", color: "violet" },
@@ -48,7 +32,7 @@ const defaultTrailer = (movie: Movie) =>
   movie.tmdbId ? `/api/trailer/${movie.tmdbId}?q=${encodeURIComponent(movie.title)}` : undefined;
 
 export default function Home({ dataUrl = "/api/releases", resolveTrailer = defaultTrailer }: HomeProps = {}) {
-  const [active, setActive] = useState<"all" | Movie["stage"]>("all");
+  const [active, setActive] = useState<StageFilter>("all");
   const [query, setQuery] = useState("");
   const [watched, setWatched] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -107,29 +91,24 @@ export default function Home({ dataUrl = "/api/releases", resolveTrailer = defau
   // Eyebrow reuses the row's availability vocabulary so the hero and rows read the same; "soon" keeps the punchier label.
   const featureEyebrow = featureMovie.stage === "soon" ? "NEXT UP" : featureMovie.availability.toUpperCase();
 
-  const filtered = useMemo(() => liveMovies.filter((movie) => {
-    const stageMatch = active === "all" || movie.stage === active;
-    const needle = query.trim().toLowerCase();
-    const queryMatch = !needle || [movie.title, movie.genre, movie.note, movie.platform ?? ""].some((field) => field.toLowerCase().includes(needle));
-    const watchedMatch = !showWatched || watched.includes(movie.title);
-    // The hero already shows the feature movie; drop it here so it isn't rendered twice.
-    return stageMatch && queryMatch && watchedMatch && movie.title !== featureMovie.title;
-  }), [active, query, showWatched, watched, liveMovies, featureMovie]);
+  const pool = useMemo(
+    () => releasePool({ movies: liveMovies, query, showWatched, watched, featureTitle: featureMovie.title }),
+    [liveMovies, query, showWatched, watched, featureMovie],
+  );
+  const filtered = useMemo(() => applyStage(pool, active), [pool, active]);
 
   // Hide the per-row status pill when every visible row shows the same availability — in a single-stage
   // tab it just echoes the tab. Keep it when the rows actually differ (All releases, stream-vs-rent, Watched).
   const showStatus = useMemo(() => new Set(filtered.map((movie) => movie.availability)).size > 1, [filtered]);
 
-  const stageCounts = useMemo(() => {
-    const pool = liveMovies.filter((movie) => movie.title !== featureMovie.title);
-    return {
-      all: pool.length,
-      theaters: pool.filter((movie) => movie.stage === "theaters").length,
-      streaming: pool.filter((movie) => movie.stage === "streaming").length,
-      released: pool.filter((movie) => movie.stage === "released").length,
-      soon: pool.filter((movie) => movie.stage === "soon").length,
-    };
-  }, [liveMovies, featureMovie]);
+  const stageCounts = useMemo(() => countByStage(pool), [pool]);
+
+  // A stage tab can empty out under you — un-mark the last watched title in it, or enter the
+  // watched view while a stage you've watched nothing from is selected. Fall back to All rather
+  // than leaving a lit-up tab over an empty list.
+  useEffect(() => {
+    if (active !== "all" && stageCounts[active] === 0) setActive("all");
+  }, [active, stageCounts]);
 
   return (
     <main>
@@ -137,7 +116,7 @@ export default function Home({ dataUrl = "/api/releases", resolveTrailer = defau
         <a className="brand" href="#top"><span className="brand-mark">M</span><span>midnight<br />queue</span></a>
         <nav aria-label="Tracker navigation">
           <a className="nav-active" href="#releases"><span>✦</span> Releases</a>
-          <button className={showWatched ? "nav-active" : ""} onClick={() => setShowWatched((value) => !value)}><span>◌</span> Watched <b>{watched.length}</b></button>
+          <button className={showWatched ? "nav-active" : ""} onClick={() => { if (!showWatched) setActive("all"); setShowWatched((value) => !value); }}><span>◌</span> Watched <b>{watched.length}</b></button>
         </nav>
         <div className="sidebar-bottom">
           <p><i className={sourceStatus} /> U.S. release data<br /><small>{sourceState}</small></p>
