@@ -53,7 +53,7 @@ npm install
 npm run dev
 ```
 
-Put your keys in a local env file:
+Put your keys in `.env.local`:
 
 ```bash
 TMDB_API_KEY=your_tmdb_key
@@ -66,10 +66,23 @@ Don't commit it. The monster under the bed is always the exposed API key. It has
 
 ## Dev
 
-React, TypeScript, Vinext, and Tailwind, built to a Cloudflare Worker.
+React, TypeScript, Vinext, and Tailwind. It builds two ways, which is one more way than something this small has any right to need.
 
 ```bash
-npm run build
+npm run build        # Cloudflare Worker artifact — asks the APIs at request time
+npm run build:pages  # static site — data baked in at build time
 ```
 
-The build validates the deployable worker artifact. The watched list lives in `localStorage` for now, which means it survives exactly as long as the browser does and not one reboot longer. The starter's D1 scaffolding is still in the tree if you ever want it saved server-side instead of trusting one browser to remember what you did last October. Some of us don't trust that browser. We've seen what it forgets.
+The Worker build is the original. `/api/releases` calls TMDb and Watchmode when someone loads the page, so the keys stay server-side.
+
+The static build exists because GitHub Pages can't keep a secret. `scripts/snapshot.mjs` does the API work ahead of time and writes `site/public/data/releases.json`, trailers already resolved to real YouTube URLs. Both builds render the same `Home` component; it just takes a different `dataUrl`. Nothing reaches the browser that a stranger couldn't already read.
+
+That's what's live at the link up top. `.github/workflows/pages.yml` re-bakes and redeploys it on every push to `main`, plus a cron every six hours, so the feed goes stale on a schedule instead of by surprise.
+
+```bash
+node --env-file=.env.local scripts/snapshot.mjs   # refresh the baked feed by hand
+node --test tests/watched-filter.test.mjs         # release filtering, no DOM needed
+npm test                                          # builds, then checks the rendered HTML
+```
+
+The watched list lives in `localStorage` for now, which means it survives exactly as long as the browser does and not one reboot longer. It's keyed on title, too, so a title that changes upstream quietly loses its mark. The starter's D1 scaffolding is still in the tree if you ever want it saved server-side instead of trusting one browser to remember what you did last October. Some of us don't trust that browser. We've seen what it forgets.
