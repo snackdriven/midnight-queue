@@ -6,7 +6,7 @@ Six months later you'll find out it quietly landed on streaming, watch the trail
 
 This is for that. Your memory did its best. It was never going to be enough on its own.
 
-**[Enter the queue if you're ready →](https://midnight-queue.kayofthedead.chatgpt.site/)**
+**[Enter the queue if you're ready →](https://midnight-queue.snackdriven.com/)**
 
 ---
 
