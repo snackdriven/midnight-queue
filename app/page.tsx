@@ -38,9 +38,28 @@ export default function Home() {
   const [active, setActive] = useState<"all" | Movie["stage"]>("all");
   const [query, setQuery] = useState("");
   const [watched, setWatched] = useState<string[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [showWatched, setShowWatched] = useState(false);
   const [liveMovies, setLiveMovies] = useState<Movie[]>(movies);
   const [sourceState, setSourceState] = useState("Refreshing live release data…");
+  const [sourceStatus, setSourceStatus] = useState<"loading" | "ok" | "error">("loading");
+
+  // Load the saved watched list once, on the client. Guarded so SSR never touches localStorage.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("mq:watched");
+      if (saved) setWatched(JSON.parse(saved));
+    } catch {}
+    setHydrated(true);
+  }, []);
+
+  // Persist after hydration only, so the initial empty render doesn't overwrite saved data.
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem("mq:watched", JSON.stringify(watched));
+    } catch {}
+  }, [watched, hydrated]);
 
   useEffect(() => {
     fetch("/api/releases", { cache: "no-store" })
@@ -48,19 +67,29 @@ export default function Home() {
       .then((payload: { releases: Movie[]; updatedAt: string }) => {
         if (payload.releases.length) setLiveMovies(payload.releases);
         setSourceState(`TMDb checked ${new Date(payload.updatedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`);
+        setSourceStatus("ok");
       })
-      .catch(() => setSourceState("Showing starter picks · live source reconnecting"));
+      .catch(() => {
+        setSourceState("Showing starter picks · live source reconnecting");
+        setSourceStatus("error");
+      });
   }, []);
+
+  const toggleWatched = (title: string) => setWatched((current) => current.includes(title) ? current.filter((item) => item !== title) : [...current, title]);
+  const featureMovie = liveMovies.find((movie) => movie.stage === "soon" && movie.backdrop)
+    ?? liveMovies.find((movie) => movie.backdrop)
+    ?? liveMovies.find((movie) => movie.stage === "soon")
+    ?? liveMovies[0];
+  // Eyebrow reuses the row's availability vocabulary so the hero and rows read the same; "soon" keeps the punchier label.
+  const featureEyebrow = featureMovie.stage === "soon" ? "NEXT UP" : featureMovie.availability.toUpperCase();
 
   const filtered = useMemo(() => liveMovies.filter((movie) => {
     const stageMatch = active === "all" || movie.stage === active;
     const queryMatch = movie.title.toLowerCase().includes(query.toLowerCase()) || movie.genre.toLowerCase().includes(query.toLowerCase());
     const watchedMatch = !showWatched || watched.includes(movie.title);
-    return stageMatch && queryMatch && watchedMatch;
-  }), [active, query, showWatched, watched, liveMovies]);
-
-  const toggleWatched = (title: string) => setWatched((current) => current.includes(title) ? current.filter((item) => item !== title) : [...current, title]);
-  const featureMovie = liveMovies.find((movie) => movie.stage === "soon") ?? liveMovies[0];
+    // The hero already shows the feature movie; drop it here so it isn't rendered twice.
+    return stageMatch && queryMatch && watchedMatch && movie.title !== featureMovie.title;
+  }), [active, query, showWatched, watched, liveMovies, featureMovie]);
 
   return (
     <main>
@@ -69,11 +98,9 @@ export default function Home() {
         <nav aria-label="Tracker navigation">
           <a className="nav-active" href="#releases"><span>✦</span> Releases</a>
           <button className={showWatched ? "nav-active" : ""} onClick={() => setShowWatched((value) => !value)}><span>◌</span> Watched <b>{watched.length}</b></button>
-          <a href="#watchlist"><span>♡</span> Watchlist <b>12</b></a>
         </nav>
         <div className="sidebar-bottom">
-          <button className="settings"><span>◐</span> Settings</button>
-          <p><i /> U.S. release data<br /><small>{sourceState}</small></p>
+          <p><i className={sourceStatus} /> U.S. release data<br /><small>{sourceState}</small></p>
         </div>
       </aside>
 
@@ -83,19 +110,15 @@ export default function Home() {
             <p className="eyebrow">YOUR HORROR CALENDAR</p>
             <h1>Don’t let the good ones<br /><em>slip into the dark.</em></h1>
           </div>
-          <div className="header-actions">
-            <button className="icon-button" aria-label="Notifications">{icons.bell}<i /></button>
-            <button className="add-button">{icons.plus} Add to watchlist</button>
-          </div>
         </header>
 
-        <section className="feature" aria-label="Next up">
+        <section className="feature" aria-label="Featured release">
           <div className="feature-art">{featureMovie.backdrop && <img src={featureMovie.backdrop} alt="" />}<span className="moon">◒</span><span className="trees">♠ ♠ ♠</span></div>
           <div className="feature-copy">
-            <p className="eyebrow">NEXT UP · {featureMovie.date.toUpperCase()}</p>
+            <p className="eyebrow">{featureEyebrow}</p>
             <h2>{featureMovie.title}</h2>
             <p>{featureMovie.note}</p>
-            <div className="feature-meta"><span>{featureMovie.availability.toUpperCase()}</span><span>•</span><span>{featureMovie.genre.toUpperCase()}</span></div>
+            <div className="feature-meta"><span>{featureMovie.genre.toUpperCase()}</span>{featureMovie.platform && <><span>•</span><span>{featureMovie.platform.toUpperCase()}</span></>}</div>
             {featureMovie.tmdbId ? <a className="outline-button" href={`/api/trailer/${featureMovie.tmdbId}`} target="_blank" rel="noreferrer">Watch trailer {icons.chevron}</a> : <button className="outline-button">View details {icons.chevron}</button>}
           </div>
           <div className="date-badge"><b>{featureMovie.date.split(" ")[1]}</b><span>{featureMovie.month}</span><small>{featureMovie.year}</small></div>
@@ -110,17 +133,23 @@ export default function Home() {
             {([['all', 'All releases'], ['theaters', 'In theaters'], ['streaming', 'Available at home'], ['released', 'Recently released'], ['soon', 'Coming soon']] as const).map(([id, label]) => <button key={id} className={active === id ? "selected" : ""} onClick={() => setActive(id)}>{label}</button>)}
           </div>
           <div className="release-list">
-            {filtered.map((movie) => <article className="release-row" key={movie.title}>
-              <time><strong>{movie.date.split(" ")[0]}</strong><span>{movie.month}<br />{movie.year}</span></time>
+            {filtered.map((movie) => <article className="release-row" key={movie.tmdbId ?? movie.title}>
+              <time><strong>{movie.date.split(" ")[1]}</strong><span>{movie.month}<br />{movie.year}</span></time>
               <div className={`poster ${movie.color}`} aria-hidden="true">{movie.poster ? <img src={movie.poster} alt="" /> : <span>{movie.title.split(" ").slice(0, 2).join("\n")}</span>}</div>
               <div className="movie-info"><h3>{movie.title}</h3><p>{movie.genre} <span>·</span> {movie.note}</p></div>
               <div className="availability"><span className={`status ${movie.stage}`}>{movie.availability}</span>{movie.platform && <b>{movie.platform}</b>}</div>
               <div className="row-actions">
                 {movie.tmdbId && <a className="trailer-button" href={`/api/trailer/${movie.tmdbId}`} target="_blank" rel="noreferrer">Trailer ↗</a>}
-                <button onClick={() => toggleWatched(movie.title)} className={watched.includes(movie.title) ? "watched" : "watch-button"} aria-label={`Mark ${movie.title} as watched`}>{watched.includes(movie.title) ? "Watched ✓" : "+ Watchlist"}</button>
+                <button onClick={() => toggleWatched(movie.title)} className={watched.includes(movie.title) ? "watched" : "watch-button"} aria-label={`Mark ${movie.title} as watched`}>{watched.includes(movie.title) ? "Watched ✓" : "+ Watched"}</button>
               </div>
             </article>)}
-            {filtered.length === 0 && <p className="empty">Nothing lurking here yet. Try another filter or search.</p>}
+            {filtered.length === 0 && <p className="empty">{
+              showWatched && watched.length === 0
+                ? "You haven’t marked anything watched yet."
+                : query
+                  ? `No releases match “${query}”.`
+                  : "Nothing lurking in this section yet. Try another filter."
+            }</p>}
           </div>
         </section>
       </section>
