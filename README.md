@@ -4,7 +4,7 @@ You are going to remember a horror movie you meant to see in theaters about thre
 
 Six months later you'll find out it quietly landed on streaming, watch the trailer, decide you were always going to see this, and lose track of it again.
 
-This is for that. Your memory did its best. It was never going to be enough on its own.
+This is for that. Your memory did its best: it tripped on flat ground while the killer walked.
 
 **[Enter the queue if you're ready →](https://now-screaming.snackdriven.com/)**
 
