@@ -88,6 +88,17 @@ export default function Home({ dataUrl = "/api/releases", resolveTrailer = defau
       });
   }, []);
 
+  // "?" opens the repo, same as disney-bracket. Skipped while typing, so searching for "?" still works.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "?") return;
+      if ((event.target as HTMLElement | null)?.closest("input,textarea")) return;
+      window.open("https://github.com/snackdriven/midnight-queue", "_blank", "noopener,noreferrer");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const toggleWatched = (title: string) => setWatched((current) => current.includes(title) ? current.filter((item) => item !== title) : [...current, title]);
   const featureMovie = liveMovies.find((movie) => movie.stage === "soon" && movie.backdrop)
     ?? liveMovies.find((movie) => movie.backdrop)
