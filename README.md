@@ -1,8 +1,8 @@
 # Midnight Queue
 
-At some point you are going to remember a horror movie you meant to see in theaters three weeks after it left.
+You are going to remember a horror movie you meant to see in theaters about three weeks after it leaves them.
 
-Then, six months later, you will find out it quietly arrived on streaming, watch the trailer, decide you were always going to watch it, and immediately lose it again.
+Six months later you'll find out it quietly landed on streaming, watch the trailer, decide you were always going to see this, and lose track of it again.
 
 This is for that. Your memory did its best.
 
@@ -12,13 +12,13 @@ This is for that. Your memory did its best.
 
 ## The premise
 
-A small, moody calendar for horror movies that are:
+A small, cold calendar for horror movies that are:
 
 - Coming to U.S. theaters
 - Still in theaters, theoretically
 - Suddenly available at home, where they can no longer hurt you with a ticket-price decision
 
-It tracks the theatrical date first, then checks whether something has reached subscription streaming or rent/buy availability. No more finding out *The One You Wanted To See* has been on Peacock for five months because the algorithm decided you needed another true-crime documentary instead.
+It tracks the theatrical date first, then checks whether something has reached subscription streaming or rent/buy. No more finding out *The One You Wanted To See* has been on Peacock for five months because the algorithm decided you needed another true-crime documentary instead.
 
 ---
 
@@ -26,50 +26,48 @@ It tracks the theatrical date first, then checks whether something has reached s
 
 Every live title gets:
 
-- **The real poster and backdrop.** No generic red-and-black skull nonsense unless the actual marketing department chose it.
-- **Theatrical timing.** Upcoming and recently released U.S. horror movies, kept in chronological order.
+- **The real poster and backdrop.** Whatever the marketing department actually made, not generic red-and-black skull art.
+- **Theatrical timing.** Upcoming and recent U.S. horror, in chronological order. The next release stands at the front of the line as the hero card.
 - **Where to watch.** Subscription streaming is called out separately from rent or buy, because those are spiritually different situations.
-- **Official trailers.** A direct link to the best available YouTube trailer, for when you need to make sure it is exactly the kind of terrible little nightmare you are in the mood for.
-- **A watchlist.** Mark something as watched so Future You cannot convincingly claim she has never heard of it.
-
-The hero card follows the next upcoming release, because somebody has to stand at the front of the line.
+- **Official trailers.** A link to the best YouTube trailer, and a plain YouTube search as a fallback when nobody has posted one yet.
+- **A watched list.** Mark something watched so Future You can't pretend she never saw it. It lives in your browser and survives a reload.
 
 ---
 
 ## Data sources
 
-The app uses [TMDb](https://www.themoviedb.org/) for movie metadata, dates, artwork, and trailers, plus [Watchmode](https://api.watchmode.com/) for U.S. streaming, rental, and purchase availability.
+Movie metadata, dates, artwork, and trailers come from [TMDb](https://www.themoviedb.org/). U.S. streaming, rental, and purchase availability comes from [Watchmode](https://api.watchmode.com/).
 
-Availability data is cached for six hours. This is a horror tracker, not an emergency broadcast system.
+Availability is cached for six hours. This is a horror tracker, not an emergency broadcast system.
 
 ---
 
 ## Run it locally
 
-You will need Node.js 22+ and API keys from TMDb and Watchmode.
+You'll need Node.js 22+ and API keys from TMDb and Watchmode.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Create a local environment file with:
+Put your keys in a local env file:
 
 ```bash
 TMDB_API_KEY=your_tmdb_key
 WATCHMODE_API_KEY=your_watchmode_key
 ```
 
-Do not commit that file. The monster under the bed is always the exposed API key.
+Don't commit it. The monster under the bed is always the exposed API key.
 
 ---
 
 ## Dev
 
-Built with React, TypeScript, Vinext, and Tailwind CSS.
+React, TypeScript, Vinext, and Tailwind, built to a Cloudflare Worker.
 
 ```bash
 npm run build
 ```
 
-The build validates the deployable worker artifact. The codebase also includes the starter's D1 scaffolding, should the watchlist become durable instead of merely trusting the browser to remember what you did last October.
+The build validates the deployable worker artifact. The watched list lives in `localStorage` for now; the starter's D1 scaffolding is still in the tree if you ever want it saved server-side instead of trusting one browser to remember what you did last October.
