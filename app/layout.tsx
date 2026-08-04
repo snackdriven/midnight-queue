@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Midnight Queue · Horror release tracker",
+  title: "Now Screaming · Horror release tracker",
   description: "Track horror movies from theatrical release to streaming.",
   other: {
     "codex-preview": "development",

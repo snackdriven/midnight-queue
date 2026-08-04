@@ -44,7 +44,7 @@ export default function Home({ dataUrl = "/api/releases", resolveTrailer = defau
   // Load the saved watched list once, on the client. Guarded so SSR never touches localStorage.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("mq:watched");
+      const saved = localStorage.getItem("ns:watched");
       if (saved) setWatched(JSON.parse(saved));
     } catch {}
     setHydrated(true);
@@ -54,7 +54,7 @@ export default function Home({ dataUrl = "/api/releases", resolveTrailer = defau
   useEffect(() => {
     if (!hydrated) return;
     try {
-      localStorage.setItem("mq:watched", JSON.stringify(watched));
+      localStorage.setItem("ns:watched", JSON.stringify(watched));
     } catch {}
   }, [watched, hydrated]);
 
@@ -77,7 +77,7 @@ export default function Home({ dataUrl = "/api/releases", resolveTrailer = defau
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== "?") return;
       if ((event.target as HTMLElement | null)?.closest("input,textarea")) return;
-      window.open("https://github.com/snackdriven/midnight-queue", "_blank", "noopener,noreferrer");
+      window.open("https://github.com/snackdriven/now-screaming", "_blank", "noopener,noreferrer");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -113,7 +113,7 @@ export default function Home({ dataUrl = "/api/releases", resolveTrailer = defau
   return (
     <main>
       <aside className="sidebar">
-        <a className="brand" href="#top"><span className="brand-mark">M</span><span>midnight<br />queue</span></a>
+        <a className="brand" href="#top"><span className="brand-mark">N</span><span>now<br />screaming</span></a>
         <nav aria-label="Tracker navigation">
           <a className={showWatched ? "" : "nav-active"} aria-current={showWatched ? undefined : "page"} href="#releases" onClick={() => setShowWatched(false)}><span>✦</span> Releases</a>
           <button className={showWatched ? "nav-active" : ""} aria-current={showWatched ? "page" : undefined} onClick={() => { if (!showWatched) setActive("all"); setShowWatched((value) => !value); }}><span>◌</span> Watched <b>{watched.length}</b></button>
