@@ -8,7 +8,7 @@ type Movie = {
   month: string;
   year: string;
   genre: string;
-  stage: "theaters" | "streaming" | "soon";
+  stage: "theaters" | "streaming" | "released" | "soon";
   availability: string;
   platform?: string;
   note: string;
@@ -19,12 +19,12 @@ type Movie = {
 };
 
 const movies: Movie[] = [
-  { title: "The Black Phone 2", date: "Oct 17", month: "OCT", year: "2025", genre: "Supernatural", stage: "theaters", availability: "In theaters", note: "The Grabber is back.", color: "violet" },
+  { title: "The Black Phone 2", date: "Oct 17", month: "OCT", year: "2025", genre: "Supernatural", stage: "released", availability: "Recently released", note: "The Grabber is back.", color: "violet" },
   { title: "Frankenstein", date: "Oct 17", month: "OCT", year: "2025", genre: "Gothic", stage: "streaming", availability: "Streaming", platform: "Netflix", note: "Guillermo del Toro’s monster movie.", color: "blood" },
-  { title: "Five Nights at Freddy’s 2", date: "Dec 5", month: "DEC", year: "2025", genre: "Video game", stage: "soon", availability: "Theatrical date", note: "Round two at Freddy Fazbear’s.", color: "acid" },
-  { title: "28 Years Later: The Bone Temple", date: "Jan 16", month: "JAN", year: "2026", genre: "Infected", stage: "soon", availability: "Theatrical date", note: "The next chapter of rage.", color: "ember" },
-  { title: "Scream 7", date: "Feb 27", month: "FEB", year: "2026", genre: "Slasher", stage: "soon", availability: "Theatrical date", note: "Ghostface returns.", color: "blood" },
-  { title: "The Mummy", date: "Apr 17", month: "APR", year: "2026", genre: "Monster", stage: "soon", availability: "Theatrical date", note: "An all-new take from Lee Cronin.", color: "sand" },
+  { title: "Five Nights at Freddy’s 2", date: "Dec 5", month: "DEC", year: "2025", genre: "Video game", stage: "released", availability: "Recently released", note: "Round two at Freddy Fazbear’s.", color: "acid" },
+  { title: "28 Years Later: The Bone Temple", date: "Jan 16", month: "JAN", year: "2026", genre: "Infected", stage: "released", availability: "Recently released", note: "The next chapter of rage.", color: "ember" },
+  { title: "Scream 7", date: "Feb 27", month: "FEB", year: "2026", genre: "Slasher", stage: "released", availability: "Recently released", note: "Ghostface returns.", color: "blood" },
+  { title: "The Mummy", date: "Apr 17", month: "APR", year: "2026", genre: "Monster", stage: "released", availability: "Recently released", note: "An all-new take from Lee Cronin.", color: "sand" },
 ];
 
 const icons = {
@@ -43,7 +43,7 @@ export default function Home() {
   const [sourceState, setSourceState] = useState("Refreshing live release data…");
 
   useEffect(() => {
-    fetch("/api/releases")
+    fetch("/api/releases", { cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Release source unavailable")))
       .then((payload: { releases: Movie[]; updatedAt: string }) => {
         if (payload.releases.length) setLiveMovies(payload.releases);
@@ -107,7 +107,7 @@ export default function Home() {
             <label className="search"><span>{icons.search}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search titles or subgenres" /></label>
           </div>
           <div className="filters" role="tablist" aria-label="Release filters">
-            {([['all', 'All releases'], ['theaters', 'In theaters'], ['streaming', 'Available at home'], ['soon', 'Coming soon']] as const).map(([id, label]) => <button key={id} className={active === id ? "selected" : ""} onClick={() => setActive(id)}>{label}</button>)}
+            {([['all', 'All releases'], ['theaters', 'In theaters'], ['streaming', 'Available at home'], ['released', 'Recently released'], ['soon', 'Coming soon']] as const).map(([id, label]) => <button key={id} className={active === id ? "selected" : ""} onClick={() => setActive(id)}>{label}</button>)}
           </div>
           <div className="release-list">
             {filtered.map((movie) => <article className="release-row" key={movie.title}>
