@@ -1,10 +1,17 @@
 
 type Video = { key: string; site: string; type: string; official: boolean };
 
-export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
+function youtubeSearch(query: string | null) {
+  const term = query ? `${query} trailer` : "horror movie trailer";
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(term)}`;
+}
+
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const apiKey = process.env.TMDB_API_KEY;
   const { id } = await context.params;
-  if (!apiKey || !/^\d+$/.test(id)) return Response.json({ error: "Trailer is unavailable" }, { status: 404 });
+  // Every path redirects — a missing/failed trailer lands on a YouTube search, never a dead JSON page.
+  const search = youtubeSearch(new URL(request.url).searchParams.get("q"));
+  if (!apiKey || !/^\d+$/.test(id)) return Response.redirect(search, 302);
 
   try {
     const response = await fetch(`https://api.themoviedb.org/3/movie/${id}/videos?api_key=${apiKey}&language=en-US`, {
@@ -15,9 +22,8 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
     const trailer = data.results.find((video) => video.site === "YouTube" && video.type === "Trailer" && video.official)
       ?? data.results.find((video) => video.site === "YouTube" && video.type === "Trailer")
       ?? data.results.find((video) => video.site === "YouTube" && video.type === "Teaser");
-    if (!trailer) return Response.json({ error: "No trailer has been posted yet" }, { status: 404 });
-    return Response.redirect(`https://www.youtube.com/watch?v=${trailer.key}`, 302);
+    return Response.redirect(trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : search, 302);
   } catch {
-    return Response.json({ error: "Trailer lookup failed" }, { status: 502 });
+    return Response.redirect(search, 302);
   }
 }

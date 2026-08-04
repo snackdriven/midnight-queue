@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root { --ink:#e8e5da; --muted:#918f8c; --line:#2b2b2c; --paper:#151515; --panel:#1b1b1c; --acid:#d6ec56; }
+:root { --ink:#e8e5da; --muted:#a5a39d; --line:#2b2b2c; --paper:#151515; --panel:#1b1b1c; --acid:#d6ec56; }
 * { box-sizing:border-box; }
 html { scroll-behavior:smooth; }
 body { margin:0; background:#111112; color:var(--ink); font-family:Arial, Helvetica, sans-serif; }
@@ -39,3 +39,39 @@ nav { display:grid; gap:7px; margin-top:63px; } nav a, nav button, .settings { c
 .row-actions .trailer-button { color:var(--acid); }
 .row-actions .watch-button { color:#b1afaa; }
 .row-actions .watched { border-color:#6f8a3f; color:var(--acid); background:#20241a; }
+
+/* Filter tabs: per-stage counts, empty ones disabled. */
+.filters button b { font-weight:normal; color:var(--muted); margin-left:5px; }
+.filters .selected b { color:var(--acid); }
+.filters button:disabled { opacity:.4; cursor:default; }
+
+/* Legibility pass — the UI ran a touch small; nudge the smallest text up a step. */
+.eyebrow { font-size:11px; }
+.filters button { font-size:12px; }
+.filters button b { font-size:11px; }
+.search input { font-size:13px; }
+.movie-info h3 { font-size:19px; }
+.movie-info p { font-size:12px; }
+.feature-meta { font-size:10px; }
+.release-row time span { font-size:10px; }
+.date-badge span, .date-badge small { font-size:10px; }
+.availability .status { font-size:10px; }
+.availability b { font-size:11px; }
+.row-actions .trailer-button, .row-actions .watch-button, .row-actions .watched { font-size:11px; }
+
+/* A11y colour pass — lift low-contrast greys toward WCAG AA (~4.5:1 on the near-black background). */
+.movie-info p { color:#a8a6a0; }
+.movie-info p span { color:#8f8d88; }
+.empty { color:#a8a6a0; }
+.feature-meta { color:#a8a6a0; }
+.feature-copy > p:not(.eyebrow) { color:#bdbbb5; }
+.filters button { color:#b3b1ab; }
+.release-row time span { color:#a29f99; }
+.date-badge span, .date-badge small { color:#a8a6a0; }
+.search input::placeholder { color:#8f8d88; }
+.sidebar-bottom p { color:#b3b1ab; }
+.sidebar-bottom small { color:#9a988f; }
+nav a, nav button, .settings { color:#c2c0ba; }
+nav b { color:#a29f99; }
+/* Visible keyboard focus (previously none). */
+a:focus-visible, button:focus-visible, input:focus-visible { outline:2px solid var(--acid); outline-offset:2px; border-radius:2px; }

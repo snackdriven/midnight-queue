@@ -91,6 +91,21 @@ export default function Home() {
     return stageMatch && queryMatch && watchedMatch && movie.title !== featureMovie.title;
   }), [active, query, showWatched, watched, liveMovies, featureMovie]);
 
+  // Hide the per-row status pill when every visible row shows the same availability — in a single-stage
+  // tab it just echoes the tab. Keep it when the rows actually differ (All releases, stream-vs-rent, Watched).
+  const showStatus = useMemo(() => new Set(filtered.map((movie) => movie.availability)).size > 1, [filtered]);
+
+  const stageCounts = useMemo(() => {
+    const pool = liveMovies.filter((movie) => movie.title !== featureMovie.title);
+    return {
+      all: pool.length,
+      theaters: pool.filter((movie) => movie.stage === "theaters").length,
+      streaming: pool.filter((movie) => movie.stage === "streaming").length,
+      released: pool.filter((movie) => movie.stage === "released").length,
+      soon: pool.filter((movie) => movie.stage === "soon").length,
+    };
+  }, [liveMovies, featureMovie]);
+
   return (
     <main>
       <aside className="sidebar">
@@ -119,7 +134,7 @@ export default function Home() {
             <h2>{featureMovie.title}</h2>
             <p>{featureMovie.note}</p>
             <div className="feature-meta"><span>{featureMovie.genre.toUpperCase()}</span>{featureMovie.platform && <><span>•</span><span>{featureMovie.platform.toUpperCase()}</span></>}</div>
-            {featureMovie.tmdbId ? <a className="outline-button" href={`/api/trailer/${featureMovie.tmdbId}`} target="_blank" rel="noreferrer">Watch trailer {icons.chevron}</a> : <button className="outline-button">View details {icons.chevron}</button>}
+            {featureMovie.tmdbId && <a className="outline-button" href={`/api/trailer/${featureMovie.tmdbId}?q=${encodeURIComponent(featureMovie.title)}`} target="_blank" rel="noreferrer">Watch trailer {icons.chevron}</a>}
           </div>
           <div className="date-badge"><b>{featureMovie.date.split(" ")[1]}</b><span>{featureMovie.month}</span><small>{featureMovie.year}</small></div>
         </section>
@@ -130,16 +145,16 @@ export default function Home() {
             <label className="search"><span>{icons.search}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search titles or subgenres" /></label>
           </div>
           <div className="filters" role="tablist" aria-label="Release filters">
-            {([['all', 'All releases'], ['theaters', 'In theaters'], ['streaming', 'Available at home'], ['released', 'Recently released'], ['soon', 'Coming soon']] as const).map(([id, label]) => <button key={id} className={active === id ? "selected" : ""} onClick={() => setActive(id)}>{label}</button>)}
+            {([['all', 'All releases'], ['theaters', 'In theaters'], ['streaming', 'Available at home'], ['released', 'Recently released'], ['soon', 'Coming soon']] as const).map(([id, label]) => <button key={id} className={active === id ? "selected" : ""} disabled={stageCounts[id] === 0} onClick={() => setActive(id)}>{label} <b>{stageCounts[id]}</b></button>)}
           </div>
           <div className="release-list">
             {filtered.map((movie) => <article className="release-row" key={movie.tmdbId ?? movie.title}>
               <time><strong>{movie.date.split(" ")[1]}</strong><span>{movie.month}<br />{movie.year}</span></time>
               <div className={`poster ${movie.color}`} aria-hidden="true">{movie.poster ? <img src={movie.poster} alt="" /> : <span>{movie.title.split(" ").slice(0, 2).join("\n")}</span>}</div>
               <div className="movie-info"><h3>{movie.title}</h3><p>{movie.genre} <span>·</span> {movie.note}</p></div>
-              <div className="availability"><span className={`status ${movie.stage}`}>{movie.availability}</span>{movie.platform && <b>{movie.platform}</b>}</div>
+              <div className="availability">{showStatus && <span className={`status ${movie.stage}`}>{movie.availability}</span>}{movie.platform && <b>{movie.platform}</b>}</div>
               <div className="row-actions">
-                {movie.tmdbId && <a className="trailer-button" href={`/api/trailer/${movie.tmdbId}`} target="_blank" rel="noreferrer">Trailer ↗</a>}
+                {movie.tmdbId && <a className="trailer-button" href={`/api/trailer/${movie.tmdbId}?q=${encodeURIComponent(movie.title)}`} target="_blank" rel="noreferrer">Trailer ↗</a>}
                 <button onClick={() => toggleWatched(movie.title)} className={watched.includes(movie.title) ? "watched" : "watch-button"} aria-label={`Mark ${movie.title} as watched`}>{watched.includes(movie.title) ? "Watched ✓" : "+ Watched"}</button>
               </div>
             </article>)}
