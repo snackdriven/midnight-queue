@@ -123,8 +123,8 @@ export default function Home() {
       <section className="content" id="top">
         <header>
           <div>
-            <p className="eyebrow">YOUR HORROR CALENDAR</p>
-            <h1>Don’t let the good ones<br /><em>slip into the dark.</em></h1>
+            <p className="eyebrow">U.S. HORROR · THEATERS TO STREAMING</p>
+            <h1>You missed it in theaters.<br /><em>It’s probably streaming by now.</em></h1>
           </div>
         </header>
 
@@ -142,7 +142,7 @@ export default function Home() {
 
         <section className="tracker" id="releases">
           <div className="tracker-heading">
-            <div><p className="eyebrow">THE RELEASE TRACKER</p><h2>Coming out of the shadows</h2></div>
+            <div><p className="eyebrow">THE RELEASE TRACKER</p><h2>Out now, and on the way</h2></div>
             <label className="search"><span>{icons.search}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search titles, subgenres, or notes" />{query && <button className="search-clear" onClick={() => setQuery("")} aria-label="Clear search">×</button>}</label>
           </div>
           <div className="filters" role="group" aria-label="Release filters">
