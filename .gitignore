@@ -42,3 +42,8 @@ next-env.d.ts
 /work/
 .openai/
 .vinext/
+
+# github pages static build (generated)
+/dist-pages/
+/site/public/data/releases.json
+tsconfig.tsbuildinfo

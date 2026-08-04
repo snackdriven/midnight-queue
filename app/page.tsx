@@ -16,6 +16,7 @@ type Movie = {
   poster?: string;
   backdrop?: string;
   tmdbId?: number;
+  trailerUrl?: string;
 };
 
 const movies: Movie[] = [
@@ -34,7 +35,19 @@ const icons = {
   chevron: "›",
 };
 
-export default function Home() {
+type HomeProps = {
+  // Where to load the release feed from. Defaults to the live API route (Vinext / ChatGPT Sites).
+  // The static GitHub Pages build passes a baked JSON URL instead.
+  dataUrl?: string;
+  // How to build a trailer link for a movie. Defaults to the server redirect route; the static
+  // build passes a resolver that returns the pre-baked YouTube URL.
+  resolveTrailer?: (movie: Movie) => string | undefined;
+};
+
+const defaultTrailer = (movie: Movie) =>
+  movie.tmdbId ? `/api/trailer/${movie.tmdbId}?q=${encodeURIComponent(movie.title)}` : undefined;
+
+export default function Home({ dataUrl = "/api/releases", resolveTrailer = defaultTrailer }: HomeProps = {}) {
   const [active, setActive] = useState<"all" | Movie["stage"]>("all");
   const [query, setQuery] = useState("");
   const [watched, setWatched] = useState<string[]>([]);
@@ -62,7 +75,7 @@ export default function Home() {
   }, [watched, hydrated]);
 
   useEffect(() => {
-    fetch("/api/releases", { cache: "no-store" })
+    fetch(dataUrl, dataUrl.startsWith("/api") ? { cache: "no-store" } : undefined)
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Release source unavailable")))
       .then((payload: { releases: Movie[]; updatedAt: string }) => {
         if (payload.releases.length) setLiveMovies(payload.releases);
@@ -135,7 +148,7 @@ export default function Home() {
             <h2>{featureMovie.title}</h2>
             <p>{featureMovie.note}</p>
             <div className="feature-meta"><span>{featureMovie.genre.toUpperCase()}</span>{featureMovie.platform && <><span>•</span><span>{featureMovie.platform.toUpperCase()}</span></>}</div>
-            {featureMovie.tmdbId && <a className="outline-button" href={`/api/trailer/${featureMovie.tmdbId}?q=${encodeURIComponent(featureMovie.title)}`} target="_blank" rel="noreferrer">Watch trailer {icons.chevron}</a>}
+            {resolveTrailer(featureMovie) && <a className="outline-button" href={resolveTrailer(featureMovie)} target="_blank" rel="noreferrer">Watch trailer {icons.chevron}</a>}
           </div>
           <div className="date-badge"><b>{featureMovie.date.split(" ")[1]}</b><span>{featureMovie.month}</span><small>{featureMovie.year}</small></div>
         </section>
@@ -155,7 +168,7 @@ export default function Home() {
               <div className="movie-info"><h3>{movie.title}</h3><p>{movie.genre} <span>·</span> {movie.note}</p></div>
               <div className="availability">{showStatus && <span className={`status ${movie.stage}`}>{movie.availability}</span>}{movie.platform && <b>{movie.platform}</b>}</div>
               <div className="row-actions">
-                {movie.tmdbId && <a className="trailer-button" href={`/api/trailer/${movie.tmdbId}?q=${encodeURIComponent(movie.title)}`} target="_blank" rel="noreferrer">Trailer ↗</a>}
+                {resolveTrailer(movie) && <a className="trailer-button" href={resolveTrailer(movie)} target="_blank" rel="noreferrer">Trailer ↗</a>}
                 <button onClick={() => toggleWatched(movie.title)} className={watched.includes(movie.title) ? "watched" : "watch-button"} aria-label={`Mark ${movie.title} as watched`}>{watched.includes(movie.title) ? "Watched ✓" : "+ Watched"}</button>
               </div>
             </article>)}
